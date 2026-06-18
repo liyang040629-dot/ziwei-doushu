@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ziwei-doushu
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: AI_PROVIDER
+        value: mimo
+      - key: MIMO_API_KEY
+        sync: false
+      - key: MIMO_BASE_URL
+        sync: false
+      - key: MIMO_MODEL
+        sync: false
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false

@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.github
+.vercel
+outputs
+work
+*.log
+.env*
+!.env.example
+Dockerfile
+README.md
+docs
+deployment

@@ -164,6 +164,7 @@ npm run dev
 如果要让别人也能打开，推荐部署到公网。仓库内置两种 GitHub Actions 自动部署方案：
 
 ```text
+docs/deploy-without-local-computer.md
 docs/github-auto-deploy-vercel.md
 docs/github-auto-deploy-windows-server.md
 ```
