@@ -34,8 +34,9 @@ liyang040629-dot/ziwei-doushu
 ```env
 AI_PROVIDER=mimo
 MIMO_API_KEY=你的_mino_key
-MIMO_BASE_URL=https://你的-mino地址/v1
+MIMO_BASE_URL=https://token-plan-cn.xiaomimimo.com/v1
 MIMO_MODEL=你接入Claude的模型名
+MIMO_API_FORMAT=openai
 NEXT_PUBLIC_SITE_URL=https://Render给你的域名
 ```
 
@@ -55,7 +56,7 @@ https://ziwei-doushu.onrender.com
 - AI 解读接口
 - `/heming` 合盘页面
 
-如果页面能打开但 AI 解读失败，优先检查 `MIMO_API_KEY`、`MIMO_BASE_URL`、`MIMO_MODEL` 是否正确。
+如果页面能打开但 AI 解读失败，优先检查 `MIMO_API_KEY`、`MIMO_BASE_URL`、`MIMO_MODEL`、`MIMO_API_FORMAT` 是否正确。
 
 ## 其他可选路线
 

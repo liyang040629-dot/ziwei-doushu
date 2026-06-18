@@ -11,8 +11,9 @@
 ```env
 AI_PROVIDER=mimo
 MIMO_API_KEY=你的_mino_key
-MIMO_BASE_URL=https://你的-mino地址/v1
+MIMO_BASE_URL=https://token-plan-cn.xiaomimimo.com/v1
 MIMO_MODEL=你接入Claude的模型名
+MIMO_API_FORMAT=openai
 NEXT_PUBLIC_SITE_URL=https://你的-vercel域名或自定义域名
 ```
 

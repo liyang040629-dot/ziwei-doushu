@@ -14,5 +14,7 @@ services:
         sync: false
       - key: MIMO_MODEL
         sync: false
+      - key: MIMO_API_FORMAT
+        value: openai
       - key: NEXT_PUBLIC_SITE_URL
         sync: false
