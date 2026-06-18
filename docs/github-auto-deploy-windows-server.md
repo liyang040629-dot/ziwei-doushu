@@ -1,6 +1,6 @@
 # GitHub Actions 自动部署到 Windows Server，并允许别人访问
 
-这套部署会在 `main` 分支推送后自动执行：
+这套部署用于 Windows Server。为了避免和 Vercel 公网部署互相干扰，默认只支持在 GitHub Actions 页面手动触发：
 
 1. GitHub Actions 先运行 `npm ci` 和 `npm run build`。
 2. 构建通过后，通过 SSH 登录 Windows Server。
