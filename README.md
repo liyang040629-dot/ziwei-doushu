@@ -151,13 +151,22 @@ npm install
 
 # 配置环境变量
 cp .env.example .env.local
-# 编辑 .env.local，填入你的 AI API Key
+# 编辑 .env.local，填入你的 Mino/Claude 或其他 OpenAI 兼容 API 配置
 
 # 启动开发服务器
 npm run dev
 ```
 
-> 注意：开源版不含后端 API 路由，AI 解读功能需要你自行实现 `/api/interpret` 等接口。排盘算法和前端界面可独立运行。
+> 当前版本已补充 `/api/interpret`、`/api/heming`、`/api/generate`，可通过 Mino/Claude 或其他 OpenAI 兼容接口提供 AI 解读能力。
+
+## GitHub Actions 自动部署
+
+如果要让别人也能打开，推荐部署到公网。仓库内置两种 GitHub Actions 自动部署方案：
+
+```text
+docs/github-auto-deploy-vercel.md
+docs/github-auto-deploy-windows-server.md
+```
 
 ---
 

@@ -1,0 +1,94 @@
+name: Deploy to Windows Server
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-windows-server
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      WINDOWS_HOST: ${{ secrets.WINDOWS_HOST }}
+      WINDOWS_USER: ${{ secrets.WINDOWS_USER }}
+      WINDOWS_SSH_KEY: ${{ secrets.WINDOWS_SSH_KEY }}
+      WINDOWS_SSH_PORT: ${{ secrets.WINDOWS_SSH_PORT || '22' }}
+      WINDOWS_DEPLOY_PATH: ${{ secrets.WINDOWS_DEPLOY_PATH || 'C:\apps\ziwei-doushu' }}
+      PUBLIC_SITE_URL: ${{ secrets.PUBLIC_SITE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Skip when Windows Server secrets are not configured
+        if: ${{ env.WINDOWS_HOST == '' || env.WINDOWS_USER == '' || env.WINDOWS_SSH_KEY == '' }}
+        shell: bash
+        run: |
+          echo "WINDOWS_HOST, WINDOWS_USER, or WINDOWS_SSH_KEY is not set. Skipping Windows Server deploy."
+
+      - name: Prepare SSH key
+        if: ${{ env.WINDOWS_HOST != '' && env.WINDOWS_USER != '' && env.WINDOWS_SSH_KEY != '' }}
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$WINDOWS_SSH_KEY" > ~/.ssh/windows_deploy_key
+          chmod 600 ~/.ssh/windows_deploy_key
+          ssh-keyscan -p "$WINDOWS_SSH_PORT" "$WINDOWS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload deploy script
+        if: ${{ env.WINDOWS_HOST != '' && env.WINDOWS_USER != '' && env.WINDOWS_SSH_KEY != '' }}
+        shell: bash
+        run: |
+          scp -i ~/.ssh/windows_deploy_key -P "$WINDOWS_SSH_PORT" \
+            scripts/deploy-windows-server.ps1 \
+            "$WINDOWS_USER@$WINDOWS_HOST:deploy-ziwei-doushu.ps1"
+
+      - name: Run remote deploy
+        if: ${{ env.WINDOWS_HOST != '' && env.WINDOWS_USER != '' && env.WINDOWS_SSH_KEY != '' }}
+        shell: bash
+        run: |
+          ssh -i ~/.ssh/windows_deploy_key -p "$WINDOWS_SSH_PORT" \
+            "$WINDOWS_USER@$WINDOWS_HOST" \
+            "powershell -NoProfile -ExecutionPolicy Bypass -File deploy-ziwei-doushu.ps1 -Repository 'https://github.com/${{ github.repository }}.git' -Branch '${{ github.ref_name }}' -DeployPath '$WINDOWS_DEPLOY_PATH'"
+
+      - name: Check public URL
+        if: ${{ env.WINDOWS_HOST != '' && env.WINDOWS_USER != '' && env.WINDOWS_SSH_KEY != '' }}
+        shell: bash
+        run: |
+          if [ -z "$PUBLIC_SITE_URL" ]; then
+            echo "PUBLIC_SITE_URL is not set; skipping public access check."
+            exit 0
+          fi
+          for attempt in {1..20}; do
+            if curl --fail --silent --show-error --max-time 15 "$PUBLIC_SITE_URL" >/dev/null; then
+              exit 0
+            fi
+            sleep 6
+          done
+          echo "Public URL did not respond: $PUBLIC_SITE_URL"
+          exit 1

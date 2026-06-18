@@ -1,0 +1,72 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vercel
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      PUBLIC_SITE_URL: ${{ secrets.PUBLIC_SITE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Skip when Vercel secrets are not configured
+        if: ${{ env.VERCEL_TOKEN == '' || env.VERCEL_ORG_ID == '' || env.VERCEL_PROJECT_ID == '' }}
+        shell: bash
+        run: |
+          echo "VERCEL_TOKEN, VERCEL_ORG_ID, or VERCEL_PROJECT_ID is not set. Skipping Vercel deploy."
+
+      - name: Setup Node.js
+        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
+        run: npm ci
+
+      - name: Pull Vercel project settings
+        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
+        run: npx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build Vercel output
+        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
+        run: npx vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy Vercel output
+        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
+        shell: bash
+        run: |
+          DEPLOY_URL="$(npx vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")"
+          echo "DEPLOY_URL=$DEPLOY_URL" >> "$GITHUB_ENV"
+          echo "Deployed to $DEPLOY_URL"
+
+      - name: Check public URL
+        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
+        shell: bash
+        run: |
+          URL="${PUBLIC_SITE_URL:-$DEPLOY_URL}"
+          for attempt in {1..20}; do
+            if curl --fail --silent --show-error --max-time 15 "$URL" >/dev/null; then
+              echo "Public access OK: $URL"
+              exit 0
+            fi
+            sleep 6
+          done
+          echo "Public URL did not respond: $URL"
+          exit 1
