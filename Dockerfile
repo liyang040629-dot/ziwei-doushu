@@ -4,8 +4,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 FROM base AS deps
 COPY package.json package-lock.json ./
-# Git hooks are only useful in a local checkout and can fail in a cloud build.
-RUN npm ci --ignore-scripts
+# Cloudflare's build-only adapter has an outdated Next peer range. It is not
+# used by this Node deployment, so install it without enforcing that range.
+RUN npm ci --legacy-peer-deps --ignore-scripts
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
